@@ -1,0 +1,13 @@
+case_id,question,pipeline,tokens,prompt_tokens,completion_tokens,cost_usd,latency_ms,judge_score,judge_pass,bertscore_f1_proxy
+Q1,"Which drugs target proteins connected to both Alzheimer disease and chronic inflammation, and which companies are associated with them?",LLM Only,152,115,37,5.3e-05,343,0.155,False,0.159
+Q1,"Which drugs target proteins connected to both Alzheimer disease and chronic inflammation, and which companies are associated with them?",Basic RAG,1268,1209,59,0.000444,887,0.874,True,0.608
+Q1,"Which drugs target proteins connected to both Alzheimer disease and chronic inflammation, and which companies are associated with them?",InfernoGraph,332,245,87,0.000116,474,0.982,True,0.944
+Q2,Trace the evidence chain from Alzheimer disease to canakinumab.,LLM Only,139,102,37,4.9e-05,338,0.172,False,0.111
+Q2,Trace the evidence chain from Alzheimer disease to canakinumab.,Basic RAG,1257,1198,59,0.00044,882,0.742,True,0.192
+Q2,Trace the evidence chain from Alzheimer disease to canakinumab.,InfernoGraph,286,261,25,0.0001,455,0.979,True,0.933
+Q3,Summarize the inflammasome community and name relevant companies.,LLM Only,138,101,37,4.8e-05,337,0.148,False,0.108
+Q3,Summarize the inflammasome community and name relevant companies.,Basic RAG,1207,1148,59,0.000422,861,0.801,True,0.377
+Q3,Summarize the inflammasome community and name relevant companies.,InfernoGraph,305,264,41,0.000107,463,0.909,True,0.714
+Q4,What does graph-aware context compression do?,LLM Only,135,98,37,4.7e-05,336,0.034,False,0.105
+Q4,What does graph-aware context compression do?,Basic RAG,1254,1195,59,0.000439,881,0.704,True,0.074
+Q4,What does graph-aware context compression do?,InfernoGraph,162,124,38,5.7e-05,403,0.859,True,0.558

@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>InfernoGraph Mission Control</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f6f8fb;
+      --panel: #ffffff;
+      --ink: #17202a;
+      --muted: #64748b;
+      --line: #d9e2ec;
+      --fire: #d94f2b;
+      --teal: #008c89;
+      --green: #14804a;
+      --blue: #3157d5;
+      --amber: #b7791f;
+      --purple: #6d4cc2;
+      --shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+    }
+
+    button,
+    input,
+    textarea,
+    select {
+      font: inherit;
+    }
+
+    .shell {
+      width: min(1440px, calc(100vw - 32px));
+      margin: 0 auto;
+      padding: 22px 0 36px;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      min-height: 58px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .mark {
+      width: 38px;
+      height: 38px;
+      border-radius: 8px;
+      background: conic-gradient(from 210deg, #d94f2b, #f2b84b, #008c89, #3157d5, #d94f2b);
+      box-shadow: inset 0 0 0 3px rgba(255, 255, 255, 0.72);
+      flex: 0 0 auto;
+    }
+
+    h1,
+    h2,
+    h3,
+    p {
+      margin: 0;
+    }
+
+    h1 {
+      font-size: clamp(1.35rem, 2vw, 2rem);
+      line-height: 1.1;
+      letter-spacing: 0;
+    }
+
+    .tagline {
+      color: var(--muted);
+      font-size: 0.94rem;
+      margin-top: 4px;
+    }
+
+    .status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 0.9rem;
+      white-space: nowrap;
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 999px;
+      background: var(--amber);
+      box-shadow: 0 0 0 4px rgba(183, 121, 31, 0.12);
+    }
+
+    .dot.ok {
+      background: var(--green);
+      box-shadow: 0 0 0 4px rgba(20, 128, 74, 0.12);
+    }
+
+    .query-band {
+      margin-top: 18px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      padding: 18px;
+    }
+
+    .query-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 168px;
+      gap: 14px;
+      align-items: stretch;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 92px;
+      resize: vertical;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      padding: 14px;
+      color: var(--ink);
+      background: #fbfdff;
+      outline: none;
+      line-height: 1.45;
+    }
+
+    textarea:focus {
+      border-color: var(--blue);
+      box-shadow: 0 0 0 3px rgba(49, 87, 213, 0.12);
+    }
+
+    .run-stack {
+      display: grid;
+      grid-template-rows: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .primary,
+    .secondary,
+    .chip {
+      border: 1px solid transparent;
+      border-radius: 8px;
+      cursor: pointer;
+      min-height: 40px;
+      transition: transform 120ms ease, border-color 120ms ease, background 120ms ease;
+    }
+
+    .primary {
+      background: var(--fire);
+      color: #fff;
+      font-weight: 760;
+    }
+
+    .secondary {
+      background: #eef4ff;
+      color: #213f9a;
+      font-weight: 680;
+      border-color: #c8d7ff;
+    }
+
+    .primary:hover,
+    .secondary:hover,
+    .chip:hover {
+      transform: translateY(-1px);
+    }
+
+    .examples {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 12px;
+    }
+
+    .chip {
+      background: #f8fafc;
+      color: #334155;
+      border-color: #dbe3ec;
+      padding: 8px 11px;
+      font-size: 0.88rem;
+    }
+
+    .summary-grid {
+      margin-top: 18px;
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .metric {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 14px;
+      min-height: 106px;
+    }
+
+    .metric .label {
+      color: var(--muted);
+      font-size: 0.82rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .metric .value {
+      margin-top: 8px;
+      font-size: clamp(1.45rem, 2.5vw, 2.45rem);
+      font-weight: 820;
+      line-height: 1;
+    }
+
+    .metric .sub {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .arena {
+      margin-top: 18px;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .pipeline {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      min-height: 426px;
+      display: grid;
+      grid-template-rows: auto auto 1fr auto;
+      overflow: hidden;
+    }
+
+    .pipeline header {
+      padding: 14px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .pipeline h2 {
+      font-size: 1rem;
+      letter-spacing: 0;
+    }
+
+    .badge {
+      border-radius: 999px;
+      padding: 5px 8px;
+      font-size: 0.76rem;
+      font-weight: 750;
+      white-space: nowrap;
+    }
+
+    .llm .badge {
+      background: #f7e8df;
+      color: #8f2f17;
+    }
+
+    .rag .badge {
+      background: #e7eefc;
+      color: #274995;
+    }
+
+    .graph .badge {
+      background: #dff6ef;
+      color: #0f6e43;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      border-bottom: 1px solid var(--line);
+    }
+
+    .stat {
+      padding: 10px;
+      border-right: 1px solid var(--line);
+      min-width: 0;
+    }
+
+    .stat:last-child {
+      border-right: 0;
+    }
+
+    .stat span {
+      display: block;
+      color: var(--muted);
+      font-size: 0.74rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .stat strong {
+      display: block;
+      margin-top: 4px;
+      font-size: 0.95rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .stat em {
+      display: block;
+      margin-top: 2px;
+      color: var(--muted);
+      font-size: 0.72rem;
+      font-style: normal;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .answer {
+      padding: 14px;
+      line-height: 1.52;
+      font-size: 0.94rem;
+      color: #243244;
+      overflow: auto;
+      max-height: 254px;
+    }
+
+    .evidence {
+      border-top: 1px solid var(--line);
+      padding: 12px 14px;
+      background: #fbfdff;
+      min-height: 76px;
+      max-height: 132px;
+      overflow: auto;
+    }
+
+    .evidence div {
+      color: var(--muted);
+      font-size: 0.82rem;
+      line-height: 1.45;
+      margin-bottom: 6px;
+    }
+
+    .lower-grid {
+      margin-top: 18px;
+      display: grid;
+      grid-template-columns: minmax(0, 1.25fr) minmax(360px, 0.75fr);
+      gap: 12px;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .panel-title {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .panel-title h2 {
+      font-size: 1rem;
+    }
+
+    .panel-title span {
+      color: var(--muted);
+      font-size: 0.86rem;
+    }
+
+    #graphSvg {
+      display: block;
+      width: 100%;
+      height: 492px;
+      background: #fbfdff;
+    }
+
+    .side-stack {
+      display: grid;
+      gap: 12px;
+    }
+
+    .heatmap,
+    .projection,
+    .route-box {
+      padding: 15px;
+    }
+
+    .bar-row {
+      display: grid;
+      grid-template-columns: 96px minmax(0, 1fr) 64px;
+      align-items: center;
+      gap: 10px;
+      margin: 12px 0;
+      color: #334155;
+      font-size: 0.88rem;
+    }
+
+    .bar-track {
+      height: 16px;
+      border-radius: 999px;
+      background: #e8eef5;
+      overflow: hidden;
+    }
+
+    .bar {
+      height: 100%;
+      border-radius: inherit;
+      min-width: 4px;
+    }
+
+    .projection input {
+      width: 100%;
+      accent-color: var(--teal);
+      margin: 14px 0;
+    }
+
+    .projection-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .mini {
+      background: #f8fafc;
+      border: 1px solid #dde6ef;
+      border-radius: 8px;
+      padding: 11px;
+      min-height: 76px;
+    }
+
+    .mini span {
+      display: block;
+      color: var(--muted);
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .mini strong {
+      display: block;
+      margin-top: 8px;
+      font-size: 1.2rem;
+    }
+
+    .route-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      margin-top: 10px;
+    }
+
+    .route-list span {
+      background: #f4f7fb;
+      border: 1px solid #dce5ef;
+      border-radius: 999px;
+      padding: 6px 9px;
+      color: #334155;
+      font-size: 0.78rem;
+    }
+
+    .benchmark-table {
+      margin-top: 18px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 64px;
+      border-radius: 999px;
+      padding: 5px 8px;
+      font-size: 0.76rem;
+      font-weight: 760;
+      text-transform: uppercase;
+    }
+
+    .status-pill.pass {
+      background: #dff6ef;
+      color: #0f6e43;
+    }
+
+    .status-pill.fail,
+    .status-pill.needs_attention {
+      background: #f9e3dc;
+      color: #9b341d;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+    }
+
+    th,
+    td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 1px solid var(--line);
+    }
+
+    th {
+      background: #f8fafc;
+      color: #475569;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      font-size: 0.76rem;
+    }
+
+    tr:last-child td {
+      border-bottom: 0;
+    }
+
+    .loading {
+      opacity: 0.62;
+      pointer-events: none;
+    }
+
+    @media (max-width: 1180px) {
+      .arena,
+      .summary-grid,
+      .lower-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .pipeline {
+        min-height: auto;
+      }
+
+      .answer {
+        max-height: none;
+      }
+    }
+
+    @media (max-width: 720px) {
+      .shell {
+        width: min(100vw - 20px, 680px);
+        padding-top: 14px;
+      }
+
+      .topbar,
+      .query-grid {
+        grid-template-columns: 1fr;
+        display: grid;
+      }
+
+      .status {
+        white-space: normal;
+      }
+
+      .run-stack {
+        grid-template-columns: 1fr 1fr;
+        grid-template-rows: none;
+      }
+
+      .stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      #graphSvg {
+        height: 360px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="topbar">
+      <div class="brand">
+        <div class="mark" aria-hidden="true"></div>
+        <div>
+          <h1>InfernoGraph</h1>
+          <p class="tagline">Adaptive Multi-Hop GraphRAG Engine for Ultra-Low-Token Reasoning</p>
+        </div>
+      </div>
+      <div class="status">
+        <span id="statusDot" class="dot"></span>
+        <span id="apiStatus">Checking backend</span>
+      </div>
+    </section>
+
+    <section class="query-band" id="queryBand">
+      <div class="query-grid">
+        <textarea id="questionInput" aria-label="Question">Which drugs target proteins connected to both Alzheimer disease and chronic inflammation, and which companies are associated with them?</textarea>
+        <button class="primary" id="runButton">Run Arena</button>
+      </div>
+    </section>
+
+    <section class="arena" id="arena"></section>
+  </main>
+
+  <script>
+    const API_BASE = "http://127.0.0.1:8000";
+
+    const fallbackResponse = {
+      question: "Which drugs target proteins connected to both Alzheimer disease and chronic inflammation, and which companies are associated with them?",
+      pipelines: [
+        {
+          name: "LLM Only",
+          mode: "no_retrieval",
+          answer: "Without retrieval, the safest answer is broad: Alzheimer-related inflammation often mentions cytokines such as TNF-alpha and IL-1 beta, but the model lacks grounded company-drug evidence in the prompt.",
+          evidence: [],
+          metrics: { tokens: 152, prompt_tokens: 119, completion_tokens: 33, cost_usd: 0.000053, latency_ms: 343, judge_score: 0.155, judge_pass: false, bertscore_f1_proxy: 0.159 }
+        },
+        {
+          name: "Basic RAG",
+          mode: "semantic_chunk_retrieval",
+          answer: "The retrieved chunks point to TNF-alpha, IL-1 beta, and the NLRP3 inflammasome as inflammation-linked targets. Candidate therapies include TNF-alpha inhibitors adalimumab, infliximab, and etanercept; IL-1 therapies canakinumab and anakinra; and NLRP3 inhibitor programs.",
+          evidence: [{ title: "TNF-alpha inhibitors and their sponsor companies", score: 1.76 }, { title: "IL-1 pathway therapies relevant to inflammatory cascades", score: 1.41 }],
+          metrics: { tokens: 1268, prompt_tokens: 1202, completion_tokens: 66, cost_usd: 0.000444, latency_ms: 887, judge_score: 0.874, judge_pass: true, bertscore_f1_proxy: 0.608 }
+        },
+        {
+          name: "InfernoGraph",
+          mode: "path_constrained_reasoning",
+          answer: "TNF-alpha and IL-1 beta connect Alzheimer-related neuroinflammation with chronic inflammation. Adalimumab, infliximab, and etanercept target TNF-alpha and are associated with AbbVie, Janssen, Amgen, and Pfizer. Canakinumab targets IL-1 beta and is associated with Novartis; anakinra blocks the IL-1 receptor and is associated with Sobi. NLRP3 inhibitor programs from Roche, Inflazome, and NodThera are relevant because NLRP3 matures IL-1 beta.",
+          evidence: ["Chronic inflammation -> mediated_by -> TNF-alpha [D3]", "Adalimumab -> targets -> TNF-alpha [D3]", "AbbVie -> associated_with -> Adalimumab [D3]"],
+          metrics: { tokens: 332, prompt_tokens: 240, completion_tokens: 92, cost_usd: 0.000116, latency_ms: 474, judge_score: 0.982, judge_pass: true, bertscore_f1_proxy: 0.944 }
+        }
+      ]
+    };
+
+    let currentData = fallbackResponse;
+
+    const questionInput = document.getElementById("questionInput");
+    const runButton = document.getElementById("runButton");
+    const statusDot = document.getElementById("statusDot");
+    const apiStatus = document.getElementById("apiStatus");
+
+    function usd(value) {
+      if (value < 1) return `$${value.toFixed(4)}`;
+      return `$${value.toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
+    }
+
+    function number(value) {
+      return Number(value || 0).toLocaleString();
+    }
+
+    async function fetchJson(path, options) {
+      const response = await fetch(`${API_BASE}${path}`, options);
+      if (!response.ok) throw new Error(`${response.status} ${response.statusText}`);
+      return response.json();
+    }
+
+    async function runCompare() {
+      const question = questionInput.value.trim() || fallbackResponse.question;
+      document.body.classList.add("loading");
+      try {
+        currentData = await fetchJson("/compare", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ question })
+        });
+        statusDot.classList.add("ok");
+        apiStatus.textContent = "Backend connected";
+      } catch (error) {
+        currentData = { ...fallbackResponse, question };
+        statusDot.classList.remove("ok");
+        apiStatus.textContent = "Offline sample mode";
+      } finally {
+        document.body.classList.remove("loading");
+        renderAll(currentData);
+      }
+    }
+
+    function renderAll(data) {
+      renderPipelines(data.pipelines);
+    }
+
+    function renderPipelines(pipelines) {
+      const classes = { "LLM Only": "llm", "Basic RAG": "rag", "InfernoGraph": "graph" };
+      document.getElementById("arena").innerHTML = pipelines.map((pipeline) => {
+        const metrics = pipeline.metrics;
+        const evidence = Array.isArray(pipeline.evidence) ? pipeline.evidence.slice(0, 4) : [];
+        return `
+          <article class="pipeline ${classes[pipeline.name] || ""}">
+            <header>
+              <h2>${pipeline.name}</h2>
+              <span class="badge">${pipeline.mode.replaceAll("_", " ")}</span>
+            </header>
+            <div class="stats">
+              <div class="stat"><span>Tokens</span><strong>${number(metrics.tokens)}</strong><em>${number(metrics.prompt_tokens)}P / ${number(metrics.completion_tokens)}C</em></div>
+              <div class="stat"><span>Cost</span><strong>${usd(metrics.cost_usd)}</strong></div>
+              <div class="stat"><span>Latency</span><strong>${number(metrics.latency_ms)} ms</strong></div>
+              <div class="stat"><span>Judge</span><strong>${Math.round(metrics.judge_score * 100)}%</strong></div>
+            </div>
+            <div class="answer">${pipeline.answer}</div>
+            <div class="evidence">
+              ${evidence.length ? evidence.map(formatEvidence).join("") : "<div>No grounded evidence supplied.</div>"}
+            </div>
+          </article>
+        `;
+      }).join("");
+    }
+
+    function formatEvidence(item) {
+      if (typeof item === "string") return `<div>${item}</div>`;
+      return `<div>${item.title || item.id} ${item.score ? `- score ${item.score}` : ""}</div>`;
+    }
+
+    runButton.addEventListener("click", runCompare);
+    renderAll(fallbackResponse);
+    runCompare();
+  </script>
+</body>
+</html>

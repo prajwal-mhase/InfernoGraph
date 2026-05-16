@@ -1,0 +1,9 @@
+CREATE VERTEX Entity (PRIMARY_ID id STRING, label STRING, kind STRING, community STRING) WITH STATS="OUTDEGREE_BY_EDGETYPE";
+
+CREATE DIRECTED EDGE Relation (
+  FROM Entity,
+  TO Entity,
+  relation STRING,
+  confidence DOUBLE,
+  source_doc STRING
+);
